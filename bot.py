@@ -2,7 +2,8 @@ import json
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-TOKEN = "8688808753:AAEwEwlt40IijyAyIICswrlmtswAKL56woM"
+import os
+TOKEN = os.environ.get("TOKEN")
 
 DATA_FILE = "balance.json"
 
