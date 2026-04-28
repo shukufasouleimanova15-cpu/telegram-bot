@@ -9,14 +9,10 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 
 TOKEN = os.environ.get("TOKEN")
 
-# OPTIONAL: leave empty list if you truly want public access
-# OR put IDs if you want only you + roommate
-ALLOWED_USERS = []
-
 DATA_FILE = "balance.json"
 
 # ----------------------------
-# BALANCE STORAGE
+# LOAD / SAVE BALANCE
 # ----------------------------
 
 def load_balance():
@@ -35,7 +31,7 @@ def save_balance(balance):
 balance = load_balance()
 
 # ----------------------------
-# MAIN LOGIC
+# MESSAGE HANDLER
 # ----------------------------
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -44,40 +40,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     text = update.message.text.strip()
 
-    # If you want access control (optional)
-    if ALLOWED_USERS and user.id not in ALLOWED_USERS:
-        return
-
-    # Validate number input
+    # Convert input to number
     try:
         value = float(text)
     except ValueError:
-        await update.message.reply_text("Send a number (e.g. 30 or -17).")
+        await update.message.reply_text("Send a number like 30 or -17.")
         return
 
-    # Update balance
+    # Update shared balance
     balance += value
     save_balance(balance)
 
-    # Build message
+    # Build transparency message
     name = user.first_name
 
     if balance > 0:
-        status = f"You owe total: {balance:.2f}"
+        status = f"📊 Total: You owe {balance:.2f}"
     elif balance < 0:
-        status = f"You are owed: {abs(balance):.2f}"
+        status = f"📊 Total: You are owed {abs(balance):.2f}"
     else:
-        status = "You're even."
+        status = "📊 You are even."
 
-    message = f"📌 {name} sent {value}\n\n{status}"
+    message = f"💬 {name} sent: {value}\n\n{status}"
 
-    # ----------------------------
-    # TRANSPARENCY: send to ALL chat participants
-    # ----------------------------
-
-    chat_id = update.effective_chat.id
-
-    await context.bot.send_message(chat_id=chat_id, text=message)
+    # Send to SAME chat (both of you see it)
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=message
+    )
 
 
 # ----------------------------
